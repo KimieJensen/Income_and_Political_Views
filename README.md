@@ -1,0 +1,1 @@
+Chi Squared Test showing significant results about the relationship between a family's total income and their political viewpoint. This test was performed by Kimie Jensen as a part of an Intermediate Statistics class at Brigham Young University.
