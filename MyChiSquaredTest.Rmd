@@ -1,0 +1,185 @@
+---
+title: "Total Family Income and Political Views Are Associated"
+output:
+  html_document:
+    theme: cerulean
+    code_folding: hide
+  word_document: default
+  pdf_document: default
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(mosaic)
+library(pander)
+library(DT)
+library(car)
+library(haven)
+gss2021 <- read_sas("../../Data/gss2021.sas7bdat",
+                    NULL)
+```
+
+```{r}
+mygss2021 <- gss2021 %>%
+  select(INCOME16, POLVIEWS) %>%
+  filter(INCOME16 %in% c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26),
+         POLVIEWS %in% c(1,2,3,4,5,6,7)) %>%
+  mutate(INCOME = case_when(INCOME16 %in% c(1,2) ~ "$2,999 and Under",
+                            INCOME16 %in% c(3,4) ~ "$3,000 - $4,999",
+                            INCOME16 %in% c(5,6) ~ "$5,000 - $6,999",
+                            INCOME16 %in% c(7,8) ~ "$7,000 - $9,999", 
+                            INCOME16 %in% c(9,10) ~ "$10,000 - $14,999",
+                            INCOME16 %in% c(11,12) ~ "$15,000 - $19,999", 
+                            INCOME16 %in% c(13,14) ~ "$20,000 - $24,999", 
+                            INCOME16 %in% c(15,16) ~ "$25,000 - $34,999",
+                            INCOME16 %in% c(17,18) ~ "$35,000 - $49,999", 
+                            INCOME16 %in% c(19,20) ~ "$50,000 - $74,999", 
+                            INCOME16 %in% c(21,22) ~ "$75,000 - $109,999", 
+                            INCOME16 %in% c(23,24) ~ "$110,000 - $149,999", 
+                            INCOME16 %in% c(25,26) ~ "$150,000 and Over"),
+        INCOME = factor(INCOME, levels=c("$2,999 and Under", "$3,000 - $4,999", "$5,000 - $6,999", "$7,000 - $9,999", "$10,000 - $14,999", "$15,000 - $19,999", "$20,000 - $24,999", "$25,000 - $34,999", "$35,000 - $49,999", "$50,000 - $74,999", "$75,000 - $109,999", "$110,000 - $149,999", "$150,000 and Over"), ordered=TRUE))
+```
+
+
+## Background
+
+Have you ever thought that someone's income is affecting what political decisions they are making? This study will examine this by answering the following question: Is the total amount of income in one family for a year independent of a person's political views (on a scale from extremely liberal to extremely conservative)?
+
+The hypothesis for this study below. The level of significance for this study is $\alpha = 0.05$
+
+$$
+H_0: \text{Total family income and a person's political views are independant.}
+$$
+
+$$
+H_a: \text{Total family income and a person's political views are associated (not independant).}
+$$
+
+
+The data used for this study is from the 2021 General Social Survey Results (GSS). The variables in question are shown below in a table and the links below can be followed for further information about this data.
+
+[Total Family Income](https://gssdataexplorer.norc.org/variables/6167/vshow#)
+
+[Political Views](https://gssdataexplorer.norc.org/variables/178/vshow)
+
+## {.tabset .tabset-pills .tabset-fade}
+
+### Hide Table
+
+### Show Table
+
+```{r}
+# table(mygss2021$INCOME16)
+# table(mygss2021$POLVIEWS)
+mytable <- table(mygss2021$INCOME, mygss2021$POLVIEWS)
+# rownames(mytable)
+# colnames(mytable)
+
+
+colnames(mytable) <- c("Extremely Liberal", "Liberal", "Slightly Liberal", "Middle of the Road", "Slightly Conservative", "Conservative", "Extermely Conservative")
+
+mytable %>%
+  pander(caption = "2021 General Social Survey Results", split.table = Inf)
+```
+
+## Bar Plots
+
+The plots below show that income and political views are not independent of each other.
+
+## {.tabset .tabset-pills .tabset-fade}
+
+### Graph View 1
+
+```{r}
+barplot(mytable, beside = TRUE, legend.text = TRUE, args.legend = list(title = "Total Family Income", cex=0.75, x = "topright", bty = 'n'),
+        col = c("#CB1111", "#D1001F", "#F01E2C", "#F94449", "#FFCBD1", "#D9DDDC", "#FFFFFF", "#DADADA", "#B7C9D9", "#9FB7CD", "#6F94B3", "#275E8E", "#003061"), las = 2, cex.names = 0.5, ylab = "Number of Responses from Survey", xlim = c(0,120), main = "Total Family Income and Political Views are Associated\nGeneral Social Survey Results")
+```
+
+### Graph View 2
+
+```{r}
+barplot(t(mytable), beside = TRUE, legend.text = TRUE, col = c("#CB1111", "#F01E2C", "#FFCBD1", "#DADADA", "#9FB7CD", "#6F94B3", "#003061"), args.legend = list(title = "Political Viewpoint", cex = 0.9, x = "topleft", bty = 'n'), las = 2, cex.names = 0.5, main = "Total Family Income and Political Views are Associated\nGeneral Social Survey Results")
+```
+
+## Analysis
+
+A Chi-squared Test of Independence was run on this data. The results below show a very small p-value (2.849e-05) so I reject the null hypothesis and say that the total income of a family is associated with a person's political views on a scale from extremely liberal to extremely conservative. The conclusion section further discusses which values were most unexpected. 
+
+```{r message=FALSE, warning=FALSE}
+mytest <- chisq.test(mytable)
+mytest %>%
+  pander(caption = "Chi-squared Test of Independence for Income and Political Views")
+
+```
+
+## {.tabset .tabset-pills .tabset-fade}
+
+
+### Hide
+
+### Show Diagnositcs
+
+The following expected counts table shows what results would be expected if total family income and a person's political views were not associated with each other. Because all the expected counts are above 1 and the average of the expected counts is more than 5 it is appropriate to perform a Chi-squared Test of Independence as I did above.
+
+```{r}
+mytest$expected %>%
+  pander(caption = "Expected Counts", split.table = Inf)
+```
+
+
+### Show Residuals
+
+The residuals below show which values were most unexpected. The higher negative values mean that less people than expected chose that option on the survey. The higher positive values mean that more people than expected chose that option on the survey. The barplot is a visual way of quickly seeing which values were most unexpected either in a negative or positive direction.
+
+
+```{r}
+mytest$residuals %>%
+  pander(caption = "Residual Values", split.table = Inf)
+
+barplot(mytest$residuals, beside = TRUE, legend.text = TRUE, args.legend = list(title = "Total Family Income", cex=0.65, x = "topright", bty = 'n'),
+        col = c("#CB1111", "#D1001F", "#F01E2C", "#F94449", "#FFCBD1", "#D9DDDC", "#FFFFFF", "#DADADA", "#B7C9D9", "#9FB7CD", "#6F94B3", "#275E8E", "#003061"), las = 2, cex.names = 0.5, xlim = c(0, 120), ylab = "Residual Values", main = "Pearson Residuals")
+```
+
+The following table gives the percentage change from what was expected to what we observed. The most notable of these values is discussed in the conclusion section.
+
+```{r}
+perchange <- (mytest$residuals*(1/sqrt(mytest$expected))*100) 
+
+perchange %>%
+  pander(caption = "Residual Values as Percents", split.table = Inf)
+
+```
+
+
+
+
+## Conclusion
+
+Because the requirements for this Chi-squared test of Independence have been met, I will proceed to interpret the residual values (to see exact residual values look in the residuals section above).
+
+The count for people who are politically in the middle of the road and have a total family income of more than \$150,000 is lower than expected. Specifically, there were 27.85 percent fewer of these people than what would be expected. Another count that was lower than expected was the count of people who are extremely conservative and have a total family income of over \$150,000. There were 63.62 percent fewer people in this category than expected. 
+
+On the other hand, the count of those who have a total family income of over \$150,000 and are sightly liberal was 33.4 percent higher than expected. The count of those who have a total family income of over \$150,000 and are liberal was also higher than expected being 26.55 percent higher than anticipated. 
+
+`This suggests that when you have a total family income of over $150,000 you are less likely to be politically in the middle of`
+`the road or to be extremely conservative and more likely to be sightly liberal or liberal.`
+
+The count for people whose total family income is between \$20,000 and \$24,999 also varies from what was expected with 50.23 percent fewer of them being slightly conservative than expected and 40.41 percent more than expected being politically in the middle of the road.
+
+`This suggests that when you have a total family income of between $20,000 and $24,999 you are less likely to be slightly`
+`conservative and more likly to be politically in the middle of the road.`
+
+These are all the residuals we will interpret for now, but the residuals section above can be looked at for further details. It is important to note just because the general results speak of people in a certain income group being more likely to have one view doesn't mean that everyone in that group will have that view. It is also important to note that just because a certain group is more likely to be slightly liberal or slightly conservative it doesn't mean that they are also more likely to be extremely liberal or extremely conservative. 
+
+Future testing could look at what other things impact a persons political views.
+
+###### Note: What is expected is what would be expected if total family income and political views were not associated.
+
+
+## References
+
+[Various Pages from the Statistics Notebook](file:///C:/Users/jense/OneDrive/Documents/Spring%202024/Statistics-Notebook-master/RCommands.html)
+
+[Chat GPT](https://chatgpt.com/c/c213b545-9c6f-42a9-8751-0c7cd19b98a1)
+
+Google was used to find hex codes
